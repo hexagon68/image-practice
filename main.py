@@ -5,18 +5,40 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk
 import sys
+
 def imread_unicode(file_path):
+    """
+    Загружает изображение с путём, содержащим юникод, в формате OpenCV.
+
+    :param file_path: str, путь к изображению
+    :return: numpy.ndarray или None, изображение в формате OpenCV или None, если не удалось загрузить
+    """
     with open(file_path, "rb") as f:
         data = np.frombuffer(f.read(), np.uint8)
     img = cv2.imdecode(data, cv2.IMREAD_COLOR)
     return img
 
 class ImageApp:
+    """
+    GUI-приложение для обработки изображений с базовым функционалом:
+    загрузка, снимок с камеры, отображение RGB-каналов, негатив, размытие, рисование прямоугольника и сброс.
+    """
+
     def on_resize(self, event):
+        """
+        Перерисовывает изображение при изменении размера окна.
+
+        :param event: событие изменения размера окна
+        """
         if self.image is not None:
             self.show_image(self.image)
 
     def __init__(self, root):
+        """
+        Инициализация графического интерфейса приложения.
+
+        :param root: tk.Tk, корневое окно Tkinter
+        """
         self.root = root
         self.root.title("Приложение для обработки изображений")
         if sys.platform.startswith("win"):
@@ -50,6 +72,9 @@ class ImageApp:
         tk.Button(self.frame_buttons, text="Отменить изменения", width=btn_width, command=self.reset_image).pack(pady=5)
 
     def load_image(self):
+        """
+        Загружает изображение из диалогового окна и отображает его.
+        """
         file_path = filedialog.askopenfilename(filetypes=[("Изображения", "*.png;*.jpg;*.jpeg")])
         if file_path:
             img = imread_unicode(file_path)
@@ -60,12 +85,14 @@ class ImageApp:
                 self.show_image(img)
 
     def capture_image(self):
+        """
+        Делает снимок с веб-камеры и отображает его.
+        """
         cap = cv2.VideoCapture(0)
         if not cap.isOpened():
             messagebox.showerror("Ошибка", "Не удалось подключиться к веб-камере.")
             return
 
-        # Прокрутить несколько кадров для стабилизации
         for _ in range(5):
             ret, frame = cap.read()
             if not ret:
@@ -74,11 +101,15 @@ class ImageApp:
                 return
 
         cap.release()
-
         self.original_image = frame.copy()
         self.show_image(frame)
 
     def show_image(self, img):
+        """
+        Отображает изображение в canvas с масштабированием под размер окна.
+
+        :param img: numpy.ndarray, изображение для отображения
+        """
         self.image = img
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img_pil = Image.fromarray(img_rgb)
@@ -95,6 +126,9 @@ class ImageApp:
         self.canvas.image = img_tk
 
     def show_channel_dialog(self):
+        """
+        Показывает выбранный пользователем канал изображения (R/G/B).
+        """
         if self.image is None:
             messagebox.showwarning("Внимание", "Сначала загрузите изображение или сделайте снимок.")
             return
@@ -113,6 +147,9 @@ class ImageApp:
         self.show_image(img_channel)
 
     def show_negative(self):
+        """
+        Показывает негатив текущего изображения.
+        """
         if self.image is None:
             messagebox.showwarning("Внимание", "Сначала загрузите изображение или сделайте снимок.")
             return
@@ -120,6 +157,9 @@ class ImageApp:
         self.show_image(negative)
 
     def show_blur(self):
+        """
+        Применяет усреднение (размытие) к изображению с указанным размером ядра.
+        """
         if self.image is None:
             messagebox.showwarning("Внимание", "Сначала загрузите изображение или сделайте снимок.")
             return
@@ -133,6 +173,9 @@ class ImageApp:
         self.show_image(blurred)
 
     def draw_rectangle(self):
+        """
+        Рисует синий прямоугольник на изображении по координатам, введённым пользователем.
+        """
         if self.image is None:
             messagebox.showwarning("Внимание", "Сначала загрузите изображение или сделайте снимок.")
             return
@@ -147,6 +190,9 @@ class ImageApp:
         self.show_image(img_copy)
 
     def reset_image(self):
+        """
+        Отменяет все изменения и возвращает исходное изображение.
+        """
         if self.original_image is not None:
             self.show_image(self.original_image.copy())
         else:
